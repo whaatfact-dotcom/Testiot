@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Planting Robot Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #f0f0f0;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      color: #333;
+    }
+    .btn {
+      display: inline-block;
+      padding: 15px 30px;
+      margin: 10px;
+      font-size: 18px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .start { background: #4CAF50; color: white; }
+    .stop { background: #f44336; color: white; }
+    .plant { background: #2196F3; color: white; }
+    .status {
+      margin-top: 30px;
+      padding: 15px;
+      background: #fff;
+      border-radius: 10px;
+      display: inline-block;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+  </style>
+</head>
+<body>
+  <h1>🌾 Planting Robot Dashboard</h1>
+
+  <button class="btn start" onclick="sendCommand('start')">Start</button>
+  <button class="btn stop" onclick="sendCommand('stop')">Stop</button>
+  <button class="btn plant" onclick="sendCommand('plant')">Plant</button>
+
+  <div class="status">
+    <p><b>MQTT Status:</b> <span id="mqttStatus">Connecting...</span></p>
+    <p><b>Robot Status:</b> <span id="robotStatus">Unknown</span></p>
+  </div>
+
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  <script>
+    // Ganti sesuai broker MQTT kamu
+    const brokerUrl = "wss://broker.hivemq.com:8884/mqtt"; // public HiveMQ broker (WebSocket + TLS)
+    const topicCommand = "plantbot/command";
+    const topicStatus = "plantbot/status";
+
+    // Connect ke broker
+    const client = mqtt.connect(brokerUrl);
+
+    const mqttStatusEl = document.getElementById("mqttStatus");
+    const robotStatusEl = document.getElementById("robotStatus");
+
+    client.on("connect", () => {
+      mqttStatusEl.textContent = "Connected ✅";
+      client.subscribe(topicStatus);
+    });
+
+    client.on("error", (err) => {
+      mqttStatusEl.textContent = "Error: " + err.message;
+    });
+
+    client.on("offline", () => {
+      mqttStatusEl.textContent = "Offline ❌";
+    });
+
+    client.on("message", (topic, message) => {
+      if (topic === topicStatus) {
+        robotStatusEl.textContent = message.toString();
+      }
+    });
+
+    function sendCommand(cmd) {
+      client.publish(topicCommand, cmd);
+      robotStatusEl.textContent = "Sent: " + cmd;
+    }
+  </script>
+</body>
+</html>
