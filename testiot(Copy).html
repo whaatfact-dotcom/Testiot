@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Plant Bot Control</title>
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 30px;
+      background: #f5f5f5;
+    }
+    h1 {
+      color: #333;
+    }
+    button {
+      padding: 15px 30px;
+      margin: 10px;
+      font-size: 18px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .start { background: #4CAF50; color: white; }
+    .stop { background: #f44336; color: white; }
+    .plant { background: #2196F3; color: white; }
+    button:hover { opacity: 0.8; }
+  </style>
+</head>
+<body>
+  <h1>🌱 Plant Bot Control</h1>
+  <button class="start" onclick="sendCommand('start')">Start</button>
+  <button class="stop" onclick="sendCommand('stop')">Stop</button>
+  <button class="plant" onclick="sendCommand('plant')">Plant</button>
+
+  <p id="status">Connecting...</p>
+
+  <script>
+    // === MQTT Setup ===
+    const broker = "wss://broker.hivemq.com:8884/mqtt"; 
+    const topicCommand = "plantbot/command";
+    const topicStatus = "plantbot/status";
+
+    const client = mqtt.connect(broker);
+
+    client.on("connect", () => {
+      document.getElementById("status").innerText = "✅ Connected to MQTT";
+      client.subscribe(topicStatus);
+    });
+
+    client.on("message", (topic, message) => {
+      if (topic === topicStatus) {
+        document.getElementById("status").innerText = "ESP32: " + message.toString();
+      }
+    });
+
+    function sendCommand(cmd) {
+      client.publish(topicCommand, cmd);
+      document.getElementById("status").innerText = "Sent: " + cmd;
+    }
+  </script>
+</body>
+</html>
