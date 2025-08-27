@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PlantBot Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      text-align: center;
+      padding: 20px;
+    }
+    h1 { color: #2c3e50; }
+    button {
+      margin: 10px;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      background: #3498db;
+      color: white;
+    }
+    button:hover { background: #2980b9; }
+    #status {
+      margin-top: 20px;
+      padding: 10px;
+      border-radius: 8px;
+      background: #ecf0f1;
+    }
+  </style>
+</head>
+<body>
+  <h1>🌱 PlantBot Dashboard</h1>
+
+  <button onclick="sendCommand('start')">Start Planting</button>
+  <button onclick="sendCommand('stop')">Stop</button>
+  <button onclick="sendCommand('plant')">Plant Now</button>
+
+  <div id="status">Connecting to MQTT...</div>
+
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  <script>
+    // ===== MQTT SETTINGS =====
+    const brokerUrl = "wss://broker.hivemq.com:8884/mqtt"; 
+    const topicCmd  = "plantbot/cmd";
+    const topicStat = "plantbot/status";
+
+    // ===== CONNECT =====
+    const client = mqtt.connect(brokerUrl, {
+      clientId: "plantbot-web-" + Math.random().toString(16).substr(2, 8),
+    });
+
+    const statusDiv = document.getElementById("status");
+
+    client.on("connect", () => {
+      statusDiv.innerHTML = "✅ Connected to HiveMQ Broker";
+      client.subscribe(topicStat);
+    });
+
+    client.on("error", (err) => {
+      statusDiv.innerHTML = "❌ Connection error: " + err;
+    });
+
+    client.on("message", (topic, msg) => {
+      if (topic === topicStat) {
+        statusDiv.innerHTML = "📡 Status: " + msg.toString();
+      }
+    });
+
+    // ===== SEND COMMAND =====
+    function sendCommand(cmd) {
+      client.publish(topicCmd, cmd);
+      statusDiv.innerHTML = "➡️ Sent command: " + cmd;
+    }
+  </script>
+</body>
+</html>
